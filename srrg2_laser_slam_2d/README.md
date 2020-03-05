@@ -51,9 +51,9 @@ catkin build srrg2_laser_slam_2d --catkin-make-args tests
 ```
 
 ## How to run
-You should use our package [`srrg2_executor`](https://github.com/srrg-sapienza/srrg2_executor) to run the pipeline. In the [`configs`](https://github.com/srrg-sapienza/srrg2_laser_slam_2d/tree/master/configurations) directory you will find two configuration file templates that can be used with [this dataset](https://drive.google.com/open?id=1el30W7cLEKDpAOdjFCInjpRB738Rx9bb):
+You should use our package [`srrg2_executor`](https://github.com/srrg-sapienza/srrg2_executor) to run the pipeline. In the [`configurations`](https://github.com/srrg-sapienza/srrg2_laser_slam_2d/tree/master/configurations) directory you will find two configuration file templates that can be used with [this dataset](https://drive.google.com/open?id=1el30W7cLEKDpAOdjFCInjpRB738Rx9bb):
 
-* [`stage_segway_double_config_LASER_0`](https://github.com/srrg-sapienza/srrg2_laser_slam_2d/tree/master/configurations/stage_segway_double_config_LASER_1.json): uses only the front rangefinder + wheel odometry.
+* [`stage_segway_double_config_LASER_0`](https://github.com/srrg-sapienza/srrg2_laser_slam_2d/tree/master/configurations/stage_segway_double_config_LASER_0.json): uses only the front rangefinder + wheel odometry.
 * [`stage_segway_double_config_MULTI`](https://github.com/srrg-sapienza/srrg2_laser_slam_2d/tree/master/configurations/stage_segway_double_config_MULTI.json): uses both front and rear rangefinders + wheel odometry.
 
 ###### Example Output
