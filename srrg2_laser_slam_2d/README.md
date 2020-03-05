@@ -36,6 +36,7 @@ ln -s <SRRG2_SOURCE_ROOT>/srrg2_core/srrg2_core_ros .
 ln -s <SRRG2_SOURCE_ROOT>/srrg2_solver/srrg2_solver .
 ln -s <SRRG2_SOURCE_ROOT>/srrg2_qgl_viewport/srrg2_qgl_viewport .
 ln -s <SRRG2_SOURCE_ROOT>/srrg2_slam_interfaces/srrg2_slam_interfaces .
+ln -s <SRRG2_SOURCE_ROOT>/srrg2_laser_slam_2d/srrg2_laser_slam_2d .
 ```
 
 5. build using Catkin
