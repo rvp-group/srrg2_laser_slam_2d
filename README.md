@@ -1,4 +1,4 @@
-# srrg2-laser-slam-2d
+# SRRG2-LASER-SLAM-2D
 This repository contains a single Catkin package:
 
 1. [`srrg2_laser_slam_2d`](srrg2_laser_slam_2d): a 2D LiDAR-based SLAM pipeline; supports multiple rangefinders and wheel odometry (at the moment).
