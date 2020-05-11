@@ -1,15 +1,15 @@
 #pragma once
-#include "correspondence_finder_2d.h"
+#include "correspondence_finder_normal_2f.h"
 #include "srrg_config/property_configurable.h"
 #include <srrg_data_structures/kd_tree.hpp>
 
-namespace srrg2_laser_tracker_2d {
+namespace srrg2_laser_slam_2d {
   using namespace srrg2_core;
 
-  class CorrespondenceFinderKDTree2D : public CorrespondenceFinder2D {
+  class CorrespondenceFinderKDTree2D : public CorrespondenceFinderNormal2f {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    using BaseType = CorrespondenceFinder2D;
+    using BaseType = CorrespondenceFinderNormal2f;
     using ThisType = CorrespondenceFinderKDTree2D;
 
     using FixedPointType  = FixedType::value_type;
@@ -47,4 +47,4 @@ namespace srrg2_laser_tracker_2d {
 
   using CorrespondenceFinderKDTree2DPtr = std::shared_ptr<CorrespondenceFinderKDTree2D>;
 
-} // namespace srrg2_laser_tracker_2d
+} // namespace srrg2_laser_slam_2d

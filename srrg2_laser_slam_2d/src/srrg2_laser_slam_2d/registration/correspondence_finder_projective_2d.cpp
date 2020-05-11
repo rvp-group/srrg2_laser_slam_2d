@@ -1,11 +1,10 @@
 #include "correspondence_finder_projective_2d.h"
-#include <iostream>
-namespace srrg2_laser_tracker_2d {
-  using namespace srrg2_core;
-  using namespace std;
 
-  void CorrespondenceFinderProjective2D::printInfo() const {
-    const std::string INFO = "CorrespondenceFinderProjective2D::printInfo| ";
+namespace srrg2_laser_slam_2d {
+  using namespace srrg2_core;
+
+  void CorrespondenceFinderProjective2f::printInfo() const {
+    const std::string INFO = "CorrespondenceFinderProjective2f::printInfo| ";
     std::cerr << INFO << "Projector Info" << std::endl;
     std::cerr << INFO << "point_distance: " << param_point_distance.value() << std::endl;
     std::cerr << INFO << "normal_cos:     " << param_normal_cos.value() << std::endl;
@@ -16,19 +15,19 @@ namespace srrg2_laser_tracker_2d {
     }
   }
 
-  void CorrespondenceFinderProjective2D::compute() {
+  void CorrespondenceFinderProjective2f::compute() {
     // bdc if not loaded from the config, instantiate a new projector w/ default sensor matrix
     PointNormal2fProjectorPolarPtr projector = this->param_projector.value();
     if (!projector) {
-      throw std::runtime_error("CorrespondenceFinderProjective2D::compute| Missing Projector");
+      throw std::runtime_error("CorrespondenceFinderProjective2f::compute| Missing Projector");
     }
 
     if (!_fixed) {
-      throw std::runtime_error("CorrespondenceFinderProjective2D::compute| Missing fixed!");
+      throw std::runtime_error("CorrespondenceFinderProjective2f::compute| Missing fixed!");
     }
 
     if (!_moving) {
-      throw std::runtime_error("CorrespondenceFinderProjective2D::compute| Missing moving!");
+      throw std::runtime_error("CorrespondenceFinderProjective2f::compute| Missing moving!");
     }
 
     //    printInfo();
@@ -44,9 +43,8 @@ namespace srrg2_laser_tracker_2d {
       _projector_changed_flag = false;
     }
 
-    //std::cerr << "camera_pose: " << geometry2d::t2v(_estimate.inverse()).transpose() << std::endl;
     // the camera sits on the fixed
-    projector->setCameraPose(_estimate.inverse());
+    projector->setCameraPose(_local_map_in_sensor.inverse());
     projector->compute(_moving_matrix, _moving->begin(), _moving->end());
     _correspondences->resize(num_beams);
 
@@ -71,11 +69,11 @@ namespace srrg2_laser_tracker_2d {
       if (mcell.transformed.normal().dot(fcell.transformed.normal()) < param_normal_cos.value()) {
         continue;
       }
-      //std::cerr << fabs(fcell.depth - mcell.depth) <<  " ";
+      // std::cerr << fabs(fcell.depth - mcell.depth) <<  " ";
       _correspondences->at(k++) = (Correspondence(fcell.source_idx, mcell.source_idx));
     }
-    //std::cerr << std::endl;
+    // std::cerr << std::endl;
     _correspondences->resize(k);
   }
 
-} // namespace srrg2_laser_tracker_2d
+} // namespace srrg2_laser_slam_2d

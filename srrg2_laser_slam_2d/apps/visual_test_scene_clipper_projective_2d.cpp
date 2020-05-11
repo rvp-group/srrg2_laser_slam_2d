@@ -2,19 +2,18 @@
 #include <iostream>
 #include <signal.h>
 
-#include "srrg_laser_slam_2d/measurement_adaptor_projective_2d.h"
-#include "srrg_laser_slam_2d/scene_clipper_projective_2d.h"
+#include "srrg2_laser_slam_2d/mapping/scene_clipper_projective_2d.h"
+#include "srrg2_laser_slam_2d/sensor_processing/raw_data_preprocessor_projective_2d.h"
 #include <srrg_data_structures/platform.h>
 #include <srrg_messages/instances.h>
 #include <srrg_pcl/instances.h>
 #include <srrg_qgl_viewport/viewer_core_shared_qgl.h>
-#include <srrg_slam_interfaces/measurement_adaptor.h>
 #include <srrg_system_utils/parse_command_line.h>
 #include <srrg_system_utils/shell_colors.h>
 #include <srrg_system_utils/system_utils.h>
 
 using namespace srrg2_core;
-using namespace srrg2_laser_tracker_2d;
+using namespace srrg2_laser_slam_2d;
 
 const std::string exe_name = "SRRG_LASER_SLAM_2D.visual_test_scene_clipper_projective_2d";
 #define LOG std::cerr << exe_name + "|"
@@ -55,8 +54,8 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
   }
 
   srrg2_core::BaseSensorMessagePtr msg;
-  MeasurementAdaptorProjective2DPtr meas_adaptor(new MeasurementAdaptorProjective2D);
-  std::vector<MeasurementAdaptorProjective2D::DestType> adapted_meas;
+  RawDataPreprocessorProjective2DPtr meas_adaptor(new RawDataPreprocessorProjective2D);
+  std::vector<RawDataPreprocessorProjective2D::MeasurementType> adapted_meas;
   StdVectorEigenIsometry3f odoms;
   std::string sensor_frame;
   std::string base_frame;
@@ -82,9 +81,9 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
       continue;
     }
     if (LaserMessagePtr casted_msg = std::dynamic_pointer_cast<LaserMessage>(msg)) {
-      MeasurementAdaptorProjective2D::DestType cloud;
-      meas_adaptor->setDest(&cloud);
-      if (meas_adaptor->setMeasurement(msg)) {
+      RawDataPreprocessorProjective2D::MeasurementType cloud;
+      meas_adaptor->setMeas(&cloud);
+      if (meas_adaptor->setRawData(msg)) {
         meas_adaptor->compute();
         adapted_meas.push_back(cloud);
       }
@@ -103,15 +102,15 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
   SceneClipperProjective2DPtr clipper(new SceneClipperProjective2D);
   clipper->param_projector->param_angle_col_min.setValue(-M_PI_2);
   clipper->param_projector->param_angle_col_max.setValue(M_PI_2);
-  clipper->setGlobalScene(&global_scene);
-  clipper->setLocalScene(&local_scene0);
-  clipper->setTransform(sensor_in_world);
+  clipper->setFullScene(&global_scene);
+  clipper->setClippedSceneInRobot(&local_scene0);
+  clipper->setRobotInLocalMap(sensor_in_world);
   clipper->compute();
 
   sensor_in_world = geometry3d::get2dFrom3dPose(odoms[1] * s_pose);
 
-  clipper->setLocalScene(&local_scene1);
-  clipper->setTransform(sensor_in_world);
+  clipper->setClippedSceneInRobot(&local_scene1);
+  clipper->setRobotInLocalMap(sensor_in_world);
   clipper->compute();
 
   // local scene is in sensor's reference frame

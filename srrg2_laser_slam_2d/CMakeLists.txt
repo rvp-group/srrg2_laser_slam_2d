@@ -26,6 +26,9 @@ catkin_package(
     src
   LIBRARIES
     srrg2_laser_slam_2d_library
+    srrg2_laser_slam_2d_registration_library
+    srrg2_laser_slam_2d_sensor_processing_library
+    srrg2_laser_slam_2d_mapping_library
   CATKIN_DEPENDS
     srrg2_slam_interfaces
     srrg2_core

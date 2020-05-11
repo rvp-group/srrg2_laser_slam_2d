@@ -1,8 +1,7 @@
+#include "srrg2_laser_slam_2d/instances.h"
 #include <srrg_benchmark_ros/slam_benchmark_suite_simul.hpp>
 #include <srrg_pcl/instances.h>
-#include <srrg_slam_interfaces/instances.h>
-
-#include "srrg_laser_slam_2d/instances.h"
+#include <srrg2_slam_interfaces/instances.h>
 
 using namespace srrg2_core;
 using namespace srrg2_slam_interfaces;
@@ -23,7 +22,7 @@ int main(int argc, char** argv) {
 
   srrg2_core::messages_registerTypes();
   srrg2_core::point_cloud_registerTypes();
-  srrg2_laser_tracker_2d::laser_tracker_2d_registerTypes();
+  srrg2_laser_slam_2d::srrg2_laser_slam_2d_registerTypes();
   srrg2_core_ros::messages_ros_registerTypes();
   Profiler::enable_logging = true;
 
@@ -41,11 +40,11 @@ int main(int argc, char** argv) {
   // ds TODO clearly this does not account for PGO/BA which happens retroactively
   while (BaseSensorMessagePtr message = benchamin->getMessage()) {
     SystemUsageCounter::tic();
-    slammer->setMeasurement(message);
+    slammer->setRawData(message);
     slammer->compute();
     const double processing_duration_seconds = SystemUsageCounter::toc();
     benchamin->setPoseEstimate(
-      slammer->robotPose(), message->timestamp.value(), processing_duration_seconds);
+      slammer->robotInWorld(), message->timestamp.value(), processing_duration_seconds);
   }
 
   // ds run benchmark evaluation

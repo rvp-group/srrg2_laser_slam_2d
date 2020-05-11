@@ -36,7 +36,7 @@
    }
  }
 
-"MultiTrackerLaser2DSlice" {
+"TrackerSliceProcessorLaser2D" {
   "#id" : 5,
   "name" : "tr_sl_scan_0",
 
@@ -112,7 +112,7 @@
    }
  }
 
-"MultiAlignerLaser2DWithSensorSlice" {
+"AlignerSliceProcessorLaser2DWithSensor" {
   "#id" : 16,
   "name" : "al_sl_laser_0",
 
@@ -168,7 +168,7 @@
   "epsilon" : 1e-05
  }
 
-"MultiTracker2DSliceOdomPrior" {
+"TrackerSliceProcessorPriorOdom2D" {
   "#id" : 19,
   "name" : "tr_sl_odom",
 
@@ -288,7 +288,7 @@
   "#id" : 26
  }
 
-"MultiAligner2DSliceOdomPrior" {
+"AlignerSliceOdom2DPrior" {
   "#id" : 30,
 
   // name of the base frame in the tf tree
@@ -544,7 +544,7 @@
   "range_min" : 0.3
  }
 
-"MultiAlignerLaser2DSlice" {
+"AlignerSliceProcessorLaser2D" {
   "#id" : 3,
   "name" : "al_sl_ld_laser_0",
 
@@ -595,7 +595,7 @@
   "relocalize_min_inliers_ratio" : 0.7
  }
 
-"CorrespondenceFinderProjective2D" {
+"CorrespondenceFinderProjective2f" {
   "#id" : 17,
 
   // min cosinus between normals
@@ -634,7 +634,7 @@
   "relocalize_min_inliers_ratio" : 0.8
  }
 
-"CorrespondenceFinderProjective2D" {
+"CorrespondenceFinderProjective2f" {
   "#id" : 42,
 
   // min cosinus between normals
@@ -653,7 +653,7 @@
   "#id" : 22
  }
 
-"MergerCorrespondence2D" {
+"MergerCorrespondencePointNormal2f" {
   "#id" : 8,
 
   // toggles point binning (distribution homogenization)
@@ -700,7 +700,7 @@
   "partition_expansion_range" : 8
  }
 
-"MeasurementAdaptorOdom2D" {
+"RawDataPreprocessorOdom2D" {
   "#id" : 20,
   "name" : "ad_odom",
 
@@ -778,7 +778,7 @@
   "#id" : 14
  }
 
-"MeasurementAdaptorProjective2D" {
+"RawDataPreprocessorProjective2D" {
   "#id" : 6,
   "name" : "ad_scan_0",
 

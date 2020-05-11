@@ -1,7 +1,7 @@
 #include "fixtures.hpp"
 
 using namespace srrg2_core;
-using namespace srrg2_laser_tracker_2d;
+using namespace srrg2_laser_slam_2d;
 
 int main(int argc_, char** argv_) {
   return srrg2_test::runTests(argc_, argv_);
@@ -9,7 +9,7 @@ int main(int argc_, char** argv_) {
 
 TEST_F(Synthetic, MeasurementAdaptor) {
   // ds allocate an adaptor with default parameters
-  MeasurementAdaptorProjective2D adaptor;
+  RawDataPreprocessorProjective2D adaptor;
   ASSERT_NOTNULL(adaptor.param_normal_computator_sliding.value());
   ASSERT_NOTNULL(adaptor.param_unprojector.value());
 
@@ -28,8 +28,8 @@ TEST_F(Synthetic, MeasurementAdaptor) {
 
   // ds process measurement
   PointNormal2fVectorCloud points;
-  adaptor.setDest(&points);
-  adaptor.setMeasurement(std::dynamic_pointer_cast<BaseSensorMessage>(laser_message_circle));
+  adaptor.setMeas(&points);
+  adaptor.setRawData(std::dynamic_pointer_cast<BaseSensorMessage>(laser_message_circle));
   adaptor.compute();
 
   // ds check computed points
@@ -43,7 +43,7 @@ TEST_F(AIS, MeasurementAdaptorKillianCourt) {
   loadDataset("mit_killian_court.json", "mit_killian_court_gt.txt", 1);
 
   // ds allocate an adaptor with default parameters
-  MeasurementAdaptorProjective2D adaptor;
+  RawDataPreprocessorProjective2D adaptor;
   ASSERT_NOTNULL(adaptor.param_normal_computator_sliding.value());
   ASSERT_NOTNULL(adaptor.param_unprojector.value());
 
@@ -62,8 +62,8 @@ TEST_F(AIS, MeasurementAdaptorKillianCourt) {
 
   // ds process measurement
   PointNormal2fVectorCloud points;
-  adaptor.setDest(&points);
-  adaptor.setMeasurement(benchamin->getMessage());
+  adaptor.setMeas(&points);
+  adaptor.setRawData(benchamin->getMessage());
   adaptor.compute();
 
   // ds check computed points
@@ -77,7 +77,7 @@ TEST_F(AIS, MeasurementAdaptorIntel) {
   loadDataset("intel_research_lab.json", "intel_research_lab_gt.txt", 1);
 
   // ds allocate an adaptor with default parameters
-  MeasurementAdaptorProjective2D adaptor;
+  RawDataPreprocessorProjective2D adaptor;
   ASSERT_NOTNULL(adaptor.param_normal_computator_sliding.value());
   ASSERT_NOTNULL(adaptor.param_unprojector.value());
 
@@ -96,8 +96,8 @@ TEST_F(AIS, MeasurementAdaptorIntel) {
 
   // ds process measurement
   PointNormal2fVectorCloud points;
-  adaptor.setDest(&points);
-  adaptor.setMeasurement(benchamin->getMessage());
+  adaptor.setMeas(&points);
+  adaptor.setRawData(benchamin->getMessage());
   adaptor.compute();
 
   // ds check computed points

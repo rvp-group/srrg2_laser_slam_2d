@@ -1,11 +1,11 @@
 #include <srrg_benchmark_ros/slam_benchmark_suite_simul.hpp>
 #include <srrg_pcl/instances.h>
-#include <srrg_slam_interfaces/instances.h>
+#include <srrg2_slam_interfaces/instances.h>
 #include <srrg_system_utils/parse_command_line.h>
 #include <srrg_system_utils/shell_colors.h>
 #include <srrg_system_utils/system_utils.h>
 
-#include "srrg_laser_slam_2d/instances.h"
+#include "srrg2_laser_slam_2d/instances.h"
 
 using namespace srrg2_core;
 using namespace srrg2_slam_interfaces;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   srrg2_core::srrgInit(argc, argv, "generic_laser2d_bench");
   srrg2_core::messages_registerTypes();
   srrg2_core::point_cloud_registerTypes();
-  srrg2_laser_tracker_2d::laser_tracker_2d_registerTypes();
+  srrg2_laser_slam_2d::srrg2_laser_slam_2d_registerTypes();
   srrg2_core_ros::messages_ros_registerTypes();
   Profiler::enable_logging = true;
 
@@ -85,12 +85,12 @@ int main(int argc, char** argv) {
     retrievePlatformSource(slammer_ptr, sync_ptr);
 
     double t0 = srrg2_core::getTime();
-    slammer_ptr->setMeasurement(msg);
+    slammer_ptr->setRawData(msg);
     slammer_ptr->compute();
     total_compute_time += (srrg2_core::getTime() - t0);
 
     // ia put in the trajectory
-    const auto pose_2d = slammer_ptr->robotPose();
+    const auto pose_2d = slammer_ptr->robotInWorld();
     const auto pose_3d = geometry3d::get3dFrom2dPose(pose_2d);
     const auto v       = geometry3d::t2tqxyzw(pose_3d);
     trajectory.insert(std::make_pair(msg->timestamp.value(), v));

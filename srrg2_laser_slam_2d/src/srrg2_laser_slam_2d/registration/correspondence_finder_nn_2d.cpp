@@ -1,7 +1,8 @@
 #include "correspondence_finder_nn_2d.h"
 
-namespace srrg2_laser_tracker_2d {
+namespace srrg2_laser_slam_2d {
 
+  using namespace srrg2_core;
   CorrespondenceFinderNN2D::CorrespondenceFinderNN2D() {
     _search.setPathMatrix(&_path_map);
   }
@@ -51,7 +52,7 @@ namespace srrg2_laser_tracker_2d {
   }
 
   void CorrespondenceFinderNN2D::compute() {
-    if (this->_fixed_changed_flag || this->_config_changed) {
+    if (ThisType::_fixed_changed_flag || ThisType::_config_changed) {
       reset();
     }
 
@@ -60,8 +61,9 @@ namespace srrg2_laser_tracker_2d {
 
     size_t k = 0;
     for (std::size_t m = 0; m < _moving->size(); ++m) {
-      int moving_idx      = static_cast<int>(m);
-      PointNormal2f moved = _moving->at(moving_idx).transform<TRANSFORM_CLASS::Isometry>(_estimate);
+      int moving_idx = static_cast<int>(m);
+      PointNormal2f moved =
+        _moving->at(moving_idx).transform<TRANSFORM_CLASS::Isometry>(_local_map_in_sensor);
       Vector2_<size_t> coord = _pointInMapCoords(moved.coordinates()).cast<size_t>();
       if (!parent_map.inside(coord.x(), coord.y())) {
         continue;
@@ -94,4 +96,4 @@ namespace srrg2_laser_tracker_2d {
     _config_changed     = false;
   }
 
-} // namespace srrg2_laser_tracker_2d
+} // namespace srrg2_laser_slam_2d

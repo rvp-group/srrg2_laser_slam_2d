@@ -2,18 +2,19 @@
 #include <iostream>
 #include <signal.h>
 
-#include "srrg_laser_slam_2d/instances.h"
+#include "srrg2_laser_slam_2d/instances.h"
+#include <srrg2_slam_interfaces/registration/aligners/multi_aligner.h>
 #include <srrg_data_structures/platform.h>
 #include <srrg_messages/instances.h>
 #include <srrg_pcl/instances.h>
 #include <srrg_qgl_viewport/viewer_core_shared_qgl.h>
-#include <srrg_slam_interfaces/multi_aligner.h>
 #include <srrg_system_utils/parse_command_line.h>
 #include <srrg_system_utils/shell_colors.h>
 #include <srrg_system_utils/system_utils.h>
 
 using namespace srrg2_core;
-using namespace srrg2_laser_tracker_2d;
+using namespace srrg2_slam_interfaces;
+using namespace srrg2_laser_slam_2d;
 
 const std::string exe_name = "SRRG_LASER_SLAM_2D.visual_test_aligner_2d";
 #define LOG std::cerr << exe_name + "|"
@@ -54,8 +55,8 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
   }
 
   srrg2_core::BaseSensorMessagePtr msg;
-  MeasurementAdaptorProjective2DPtr meas_adaptor(new MeasurementAdaptorProjective2D);
-  std::vector<MeasurementAdaptorProjective2D::DestType> adapted_meas;
+  RawDataPreprocessorProjective2DPtr meas_adaptor(new RawDataPreprocessorProjective2D);
+  std::vector<RawDataPreprocessorProjective2D::MeasurementType> adapted_meas;
   StdVectorEigenIsometry3f odoms;
   Point3fVectorCloud pc3d;
   PointNormal2fVectorCloud global_scene;
@@ -79,9 +80,9 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
       continue;
     }
     if (LaserMessagePtr casted_msg = std::dynamic_pointer_cast<LaserMessage>(msg)) {
-      MeasurementAdaptorProjective2D::DestType cloud;
-      meas_adaptor->setDest(&cloud);
-      if (meas_adaptor->setMeasurement(msg)) {
+      RawDataPreprocessorProjective2D::MeasurementType cloud;
+      meas_adaptor->setMeas(&cloud);
+      if (meas_adaptor->setRawData(msg)) {
         meas_adaptor->compute();
         adapted_meas.push_back(cloud);
       }
@@ -98,7 +99,7 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
 
   // srrg set multi aligner
   //  MultiAlignerLaser2DSlicePtr slice(new MultiAlignerLaser2DSlice);
-  MultiAlignerLaser2DWithSensorSlicePtr slice(new MultiAlignerLaser2DWithSensorSlice);
+  AlignerSliceProcessorLaser2DWithSensorPtr slice(new AlignerSliceProcessorLaser2DWithSensor);
   slice->param_fixed_slice_name.setValue("points");
   slice->param_moving_slice_name.setValue("points");
   slice->param_base_frame_id.setValue("base_frame");
@@ -123,7 +124,7 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
   aligner->param_slice_processors.pushBack(slice);
   aligner->setFixed(&fixed_prop_container);
   aligner->setMoving(&moving_prop_container);
-  aligner->setEstimate(Isometry2f::Identity());
+  aligner->setMovingInFixed(Isometry2f::Identity());
   aligner->compute();
   auto corrs    = slice->correspondences();
   Vector3f* asd = new Vector3f[corrs.size() * 2];
@@ -141,11 +142,12 @@ void process(MessageFileSourcePtr src_, const ViewerCanvasPtr& canvas_) {
     ++k;
   }
 
-  std::cerr << "estimate: " << geometry2d::t2v(aligner->estimate()).transpose() << std::endl;
-  std::cerr << "investim: " << geometry2d::t2v(aligner->estimate().inverse()).transpose()
+  std::cerr << "estimate: " << geometry2d::t2v(aligner->movingInFixed()).transpose() << std::endl;
+  std::cerr << "investim: " << geometry2d::t2v(aligner->movingInFixed().inverse()).transpose()
             << std::endl;
 
-  Isometry3f robot_prev_in_robot = srrg2_core::geometry3d::get3dFrom2dPose(aligner->estimate());
+  Isometry3f robot_prev_in_robot =
+    srrg2_core::geometry3d::get3dFrom2dPose(aligner->movingInFixed());
 
   std::cerr << "s_pose  : " << geometry3d::t2ta(sensor_in_robot_3d).transpose() << std::endl;
   std::cerr << "estsens : "

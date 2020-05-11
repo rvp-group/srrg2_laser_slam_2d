@@ -143,7 +143,7 @@
   "name" : "source",
 
   // file to read
-  "filename" : "segway_double_3.bag", 
+  "filename" : "segway_double_3.bag",
   "topics" : [ "/diago_0/scan_0_0", "/diago_0/scan_0_1", "/diago_0/odom", "/tf" ],
 
   // verbose
@@ -157,7 +157,7 @@
   "chi_threshold" : 0.01
  }
 
-"MultiAlignerLaser2DWithSensorSlice" {
+"AlignerSliceProcessorLaser2DWithSensor" {
   "#id" : 13,
   "name" : "al_sl_laser_1",
 
@@ -222,7 +222,7 @@
   "epsilon" : 0.001
  }
 
-"MultiTracker2DSliceOdomPrior" {
+"TrackerSliceProcessorPriorOdom2D" {
   "#id" : 17,
   "name" : "tr_sl_odom",
 
@@ -258,7 +258,7 @@
   "damping" : 0
  }
 
-"MultiTrackerLaser2DSlice" {
+"TrackerSliceProcessorLaser2D" {
   "#id" : 20,
   "name" : "tr_sl_scan_1",
 
@@ -369,7 +369,7 @@
    }
  }
 
-"MultiAlignerLaser2DWithSensorSlice" {
+"AlignerSliceProcessorLaser2DWithSensor" {
   "#id" : 32,
   "name" : "al_sl_laser_0",
 
@@ -399,7 +399,7 @@
    }
  }
 
-"MultiAligner2DSliceOdomPrior" {
+"AlignerSliceOdom2DPrior" {
   "#id" : 34,
   "name" : "ad_sl_odom",
 
@@ -493,7 +493,7 @@
    }
  }
 
-"MeasurementAdaptorProjective2D" {
+"RawDataPreprocessorProjective2D" {
   "#id" : 41,
   "name" : "ad_scan_0",
 
@@ -569,7 +569,7 @@
   "damping" : 0
  }
 
-"MultiAlignerLaser2DSlice" {
+"AlignerSliceProcessorLaser2D" {
   "#id" : 46,
   "name" : "al_sl_ld",
 
@@ -629,7 +629,7 @@
    }
  }
 
-"MultiTrackerLaser2DSlice" {
+"TrackerSliceProcessorLaser2D" {
   "#id" : 38,
   "name" : "tr_sl_scan_0",
 
@@ -682,7 +682,7 @@
   "voxelize_resolution" : 0
  }
 
-"CorrespondenceFinderProjective2D" {
+"CorrespondenceFinderProjective2f" {
   "#id" : 14,
 
   // min cosinus between normals
@@ -731,7 +731,7 @@
    }
  }
 
-"CorrespondenceFinderProjective2D" {
+"CorrespondenceFinderProjective2f" {
   "#id" : 33,
 
   // min cosinus between normals
@@ -768,7 +768,7 @@
   "relocalize_min_inliers_ratio" : 0.75
  }
 
-"CorrespondenceFinderProjective2D" {
+"CorrespondenceFinderProjective2f" {
   "#id" : 47,
 
   // min cosinus between normals
@@ -852,7 +852,7 @@
   "normal_point_distance" : 0.3
  }
 
-"MergerCorrespondence2D" {
+"MergerCorrespondencePointNormal2f" {
   "#id" : 51,
 
   // toggles point binning (distribution homogenization)
@@ -908,7 +908,7 @@
   "voxelize_resolution" : 0
  }
 
-"MeasurementAdaptorOdom2D" {
+"RawDataPreprocessorOdom2D" {
   "#id" : 18,
   "name" : "ad_odom",
 
@@ -1042,7 +1042,7 @@
   "range_min" : 0.3
  }
 
-"MeasurementAdaptorProjective2D" {
+"RawDataPreprocessorProjective2D" {
   "#id" : 21,
   "name" : "ad_scan_1",
 

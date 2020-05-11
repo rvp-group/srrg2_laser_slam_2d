@@ -1,7 +1,7 @@
 #include "fixtures.hpp"
 
 using namespace srrg2_core;
-using namespace srrg2_laser_tracker_2d;
+using namespace srrg2_laser_slam_2d;
 using namespace srrg2_slam_interfaces;
 
 #ifdef CURRENT_SOURCE_DIR
@@ -44,20 +44,20 @@ TEST_F(AIS, KillianCourtSLAM) {
   if (!message) {
     throw std::runtime_error("CANCRO");
   } else {
-    std::cerr << "DIOCANE SEQ [ " << message->seq.value() << " ]\n";
+    std::cerr << "SEQ [ " << message->seq.value() << " ]\n";
   }
-  std::cerr << "start while lopop\n";
-  while (message = benchamin->getMessage()) {
+  std::cerr << "start while loop\n";
+  while ((message = benchamin->getMessage())) {
     std::cerr << "TEST|AIS::KillianCourtSLAM|message [ " << message->seq.value() << " ]\n";
     SystemUsageCounter::tic();
     std::cerr << "TEST|AIS::KillianCourtSLAM|setting message\n";
-    slammer->setMeasurement(message);
+    slammer->setRawData(message);
     std::cerr << "TEST|AIS::KillianCourtSLAM|compute\n";
     slammer->compute();
     const double processing_duration_seconds = SystemUsageCounter::toc();
     std::cerr << "TEST|AIS::KillianCourtSLAM|setting pose estimate to benchamin\n";
     benchamin->setPoseEstimate(
-      slammer->robotPose(), message->timestamp.value(), processing_duration_seconds);
+      slammer->robotInWorld(), message->timestamp.value(), processing_duration_seconds);
   }
 
   // ds check graph

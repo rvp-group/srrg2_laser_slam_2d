@@ -1,9 +1,9 @@
 #include <srrg_benchmark/slam_benchmark_suite_carmen.hpp>
 #include <srrg_pcl/instances.h>
-#include <srrg_slam_interfaces/instances.h>
+#include <srrg2_slam_interfaces/instances.h>
 #include <srrg_test/test_helper.hpp>
 
-#include "srrg_laser_slam_2d/instances.h"
+#include "srrg2_laser_slam_2d/instances.h"
 
 class Synthetic : public ::testing::Test {
 public:
@@ -60,7 +60,7 @@ protected:
   void SetUp() override {
     srrg2_core::messages_registerTypes();
     srrg2_core::point_cloud_registerTypes();
-    srrg2_laser_tracker_2d::laser_tracker_2d_registerTypes();
+    srrg2_laser_slam_2d::srrg2_laser_slam_2d_registerTypes();
     benchamin = srrg2_core::SLAMBenchmarkSuiteSE2Ptr(new srrg2_core::SLAMBenchmarkSuiteCARMEN());
   }
 

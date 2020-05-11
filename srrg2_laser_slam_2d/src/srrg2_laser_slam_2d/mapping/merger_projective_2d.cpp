@@ -1,7 +1,8 @@
 #include "merger_projective_2d.h"
 
-namespace srrg2_laser_tracker_2d {
+namespace srrg2_laser_slam_2d {
 
+  using namespace srrg2_core;
   MergerProjective2D::~MergerProjective2D() {
   }
 
@@ -9,33 +10,33 @@ namespace srrg2_laser_tracker_2d {
     if (!param_projector.value()) {
       throw std::runtime_error("MergerProjective2D::compute| Missing Projector");
     }
-    PointNormal2fProjectorPolarPtr projector = this->param_projector.value();
+    PointNormal2fProjectorPolarPtr projector = param_projector.value();
     const int num_beams                      = projector->param_canvas_cols.value();
 
     _scene_matrix.resize(1, num_beams);
-    _moving_matrix.resize(1, num_beams);
+    _measurement_matrix.resize(1, num_beams);
 
-    projector->setCameraPose(_transform);
+    projector->setCameraPose(_measurement_in_scene);
     projector->compute(_scene_matrix, _scene->begin(), _scene->end());
 
-    _transformed_moving = *_moving;
-    _transformed_moving.transformInPlace(_transform);
-    projector->compute(_moving_matrix, _transformed_moving.begin(), _transformed_moving.end());
+    _transformed_measurement = *_measurement;
+    _transformed_measurement.transformInPlace(_measurement_in_scene);
+    projector->compute(
+      _measurement_matrix, _transformed_measurement.begin(), _transformed_measurement.end());
 
     // bdc get current scene size
     size_t scene_size = _scene->size();
     // bdc increase the size with the number of measures
     // std::cerr << "nsc: " << _scene->size() << ", ";
-    _scene->resize(scene_size + _moving_matrix.size());
-    using ProjectedMatrixIterator     = PointNormal2fProjectorPolar::TargetMatrixType::iterator;
-    ProjectedMatrixIterator scene_it  = _scene_matrix.begin();
-    ProjectedMatrixIterator moving_it = _moving_matrix.begin();
+    _scene->resize(scene_size + _measurement_matrix.size());
+    auto scene_it  = _scene_matrix.begin();
+    auto moving_it = _measurement_matrix.begin();
 
     int new_points      = 0;
     int merged_points   = 0;
     int replaced_points = 0;
 
-    for (; scene_it != _scene_matrix.end() && moving_it != _moving_matrix.end();
+    for (; scene_it != _scene_matrix.end() && moving_it != _measurement_matrix.end();
          ++scene_it, ++moving_it) {
       auto& scell = *scene_it;
       auto& mcell = *moving_it;
@@ -51,7 +52,7 @@ namespace srrg2_laser_tracker_2d {
         continue;
       }
 
-      auto& moving_point = _transformed_moving[mcell.source_idx];
+      auto& moving_point = _transformed_measurement[mcell.source_idx];
       // bdc source is useless, add measure to the scene as it is
       if (scell.source_idx < 0 && mcell.source_idx >= 0) {
         _scene->at(scene_size) = moving_point;
@@ -98,4 +99,4 @@ namespace srrg2_laser_tracker_2d {
     _status = MergerBase::Status::Success;
   }
 
-} // namespace srrg2_laser_tracker_2d
+} // namespace srrg2_laser_slam_2d

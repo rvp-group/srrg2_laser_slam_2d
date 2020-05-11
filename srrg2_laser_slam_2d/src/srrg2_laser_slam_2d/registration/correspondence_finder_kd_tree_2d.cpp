@@ -1,6 +1,6 @@
 #include "correspondence_finder_kd_tree_2d.h"
 
-namespace srrg2_laser_tracker_2d {
+namespace srrg2_laser_slam_2d {
 
   void CorrespondenceFinderKDTree2D::compute() {
     if (this->_fixed_changed_flag) {
@@ -13,7 +13,7 @@ namespace srrg2_laser_tracker_2d {
       int fixed_idx = -1;
       KDTree2D::VectorTD response_coord;
       MovingPointType moved =
-        _moving->at(moving_idx).transform<TRANSFORM_CLASS::Isometry>(_estimate);
+        _moving->at(moving_idx).transform<TRANSFORM_CLASS::Isometry>(_local_map_in_sensor);
 
       float distance = _kd_tree->findNeighbor(
         response_coord, fixed_idx, moved.coordinates(), param_max_distance_m.value());
@@ -37,4 +37,4 @@ namespace srrg2_laser_tracker_2d {
       new KDTree2D(coords_vector, param_max_leaf_range.value(), param_min_leaf_points.value())));
   }
 
-} // namespace srrg2_laser_tracker_2d
+} // namespace srrg2_laser_slam_2d

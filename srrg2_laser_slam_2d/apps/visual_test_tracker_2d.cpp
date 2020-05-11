@@ -2,22 +2,21 @@
 #include <iostream>
 #include <signal.h>
 
-#include "srrg_laser_slam_2d/instances.h"
+#include "srrg2_laser_slam_2d/instances.h"
+#include <srrg2_slam_interfaces/instances.h>
 #include <srrg_config/configurable_manager.h>
 #include <srrg_data_structures/platform.h>
 #include <srrg_messages/instances.h>
 #include <srrg_messages_ros/instances.h>
 #include <srrg_pcl/instances.h>
 #include <srrg_qgl_viewport/viewer_core_shared_qgl.h>
-#include <srrg_slam_interfaces/instances.h>
-#include <srrg_slam_interfaces/multi_aligner.h>
-#include <srrg_slam_interfaces/multi_tracker.h>
 #include <srrg_system_utils/parse_command_line.h>
 #include <srrg_system_utils/shell_colors.h>
 #include <srrg_system_utils/system_utils.h>
 
 using namespace srrg2_core;
-using namespace srrg2_laser_tracker_2d;
+using namespace srrg2_slam_interfaces;
+using namespace srrg2_laser_slam_2d;
 
 const std::string exe_name = "SRRG_LASER_SLAM_2D.visual_test_tracker_2d";
 #define LOG std::cerr << exe_name + "|"
@@ -26,7 +25,7 @@ void draw(const ViewerCanvasPtr& canvas_);
 void generateConfig(std::shared_ptr<ConfigurableManager> manager);
 
 int main(int argc, char** argv) {
-  srrgInit(argc, argv, "srrg_node");
+  srrgInit(argc, argv, "visual_test_tracker_2d");
   srrg2_core::point_cloud_registerTypes();
   srrg2_core::messages_registerTypes();
   srrg2_core_ros::messages_ros_registerTypes();
@@ -56,9 +55,9 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-MultiTrackerLaser2DSlicePtr tracker_laser_slice = nullptr;
-MultiTracker2DPtr tracker                       = nullptr;
-PlatformPtr platform                            = nullptr;
+TrackerSliceProcessorLaser2DPtr tracker_laser_slice = nullptr;
+MultiTracker2DPtr tracker                           = nullptr;
+PlatformPtr platform                                = nullptr;
 
 void generateConfig(std::shared_ptr<ConfigurableManager> manager) {
   std::vector<std::string> topics;
@@ -79,15 +78,15 @@ void generateConfig(std::shared_ptr<ConfigurableManager> manager) {
   sync->param_topics.setValue(topics);
 
   // srrg setup aligner
-  MultiAlignerLaser2DWithSensorSlicePtr aligner_laser_slice =
-    manager->create<MultiAlignerLaser2DWithSensorSlice>("aligner_laser_slice");
+  AlignerSliceProcessorLaser2DWithSensorPtr aligner_laser_slice =
+    manager->create<AlignerSliceProcessorLaser2DWithSensor>("aligner_laser_slice");
   aligner_laser_slice->param_fixed_slice_name.setValue("points");
   aligner_laser_slice->param_moving_slice_name.setValue("points");
   aligner_laser_slice->param_base_frame_id.setValue("base_frame");
   aligner_laser_slice->param_frame_id.setValue("scan");
 
-  MultiAligner2DSliceOdomPriorPtr aligner_odom_slice =
-    manager->create<MultiAligner2DSliceOdomPrior>("aligner_odom_slice");
+  AlignerSliceOdom2DPriorPtr aligner_odom_slice =
+    manager->create<AlignerSliceOdom2DPrior>("aligner_odom_slice");
   aligner_odom_slice->param_fixed_slice_name.setValue("odom");
   aligner_odom_slice->param_moving_slice_name.setValue("odom");
   aligner_odom_slice->param_base_frame_id.setValue("odom");
@@ -97,12 +96,12 @@ void generateConfig(std::shared_ptr<ConfigurableManager> manager) {
   aligner->param_slice_processors.pushBack(aligner_laser_slice);
   aligner->param_slice_processors.pushBack(aligner_odom_slice);
 
-  tracker_laser_slice = manager->create<MultiTrackerLaser2DSlice>("tracker_laser_slice");
+  tracker_laser_slice = manager->create<TrackerSliceProcessorLaser2D>("tracker_laser_slice");
   tracker_laser_slice->param_base_frame_id.setValue("base_frame");
   tracker_laser_slice->param_frame_id.setValue("scan");
 
-  MultiTracker2DSliceOdomPriorPtr tracker_odom_slice =
-    manager->create<MultiTracker2DSliceOdomPrior>("tracker_odom_slice");
+  TrackerSliceProcessorPriorOdom2DPtr tracker_odom_slice =
+    manager->create<TrackerSliceProcessorPriorOdom2D>("tracker_odom_slice");
   tracker_odom_slice->param_measurement_slice_name.setValue("odom");
   tracker_odom_slice->param_scene_slice_name.setValue("odom");
   tracker_odom_slice->param_base_frame_id.setValue("odom");
@@ -120,7 +119,7 @@ void process(std::shared_ptr<ConfigurableManager> manager_, const ViewerCanvasPt
   }
 
   auto sync            = manager_->getByName<MessageSynchronizedSource>("sync");
-  tracker_laser_slice  = manager_->getByName<MultiTrackerLaser2DSlice>("tracker_laser_slice");
+  tracker_laser_slice  = manager_->getByName<TrackerSliceProcessorLaser2D>("tracker_laser_slice");
   tracker              = manager_->getByName<MultiTracker2D>("tracker");
   auto platform_source = manager_->getByName<MessageSourcePlatform>("platform_source");
 
@@ -165,12 +164,12 @@ void process(std::shared_ptr<ConfigurableManager> manager_, const ViewerCanvasPt
       //        continue;
       //      }
       //      if (LaserMessagePtr casted_msg = std::dynamic_pointer_cast<LaserMessage>(msg)) {
-      tracker->setMeasurement(msg);
-      std::cerr << "setMeasurement" << std::endl;
+      tracker->setRawData(msg);
+      std::cerr << "setRawData" << std::endl;
       draw(canvas_);
       std::cin.get();
-      tracker->adaptMeasurements();
-      std::cerr << "adaptMeasurements" << std::endl;
+      tracker->preprocessRawData();
+      std::cerr << "preprocessRawData" << std::endl;
       draw(canvas_);
       std::cin.get();
       tracker->align();
@@ -235,14 +234,14 @@ void draw(const ViewerCanvasPtr& canvas_) {
   }
   {
     canvas_->pushMatrix();
-    canvas_->multMatrix((geometry3d::get3dFrom2dPose(tracker->estimate())).matrix());
+    canvas_->multMatrix((geometry3d::get3dFrom2dPose(tracker->robotInLocalMap())).matrix());
 
     canvas_->putReferenceSystem(.1);
     canvas_->popMatrix();
 
     canvas_->pushMatrix();
     canvas_->multMatrix(
-      (geometry3d::get3dFrom2dPose(tracker->estimate()) * sensor_in_robot_3d).matrix());
+      (geometry3d::get3dFrom2dPose(tracker->robotInLocalMap()) * sensor_in_robot_3d).matrix());
     canvas_->putReferenceSystem(.25);
 
     canvas_->pushColor(); // push color

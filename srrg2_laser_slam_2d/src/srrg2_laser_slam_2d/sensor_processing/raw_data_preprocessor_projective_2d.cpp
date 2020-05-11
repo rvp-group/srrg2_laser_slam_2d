@@ -4,20 +4,20 @@
 #include <srrg_pcl/point_projector_types.h>
 
 // ia scan matcher things
-#include "measurement_adaptor_projective_2d.h"
+#include "raw_data_preprocessor_projective_2d.h"
 
-namespace srrg2_laser_tracker_2d {
+namespace srrg2_laser_slam_2d {
 
   using namespace srrg2_core;
 
-  void MeasurementAdaptorProjective2D::compute() {
-    if (!_measurement || !_dest) {
+  void RawDataPreprocessorProjective2D::compute() {
+    if (!_meas || !_raw_data) {
       _status = Error;
       return;
     }
 
     if (!param_unprojector.value()) {
-      throw std::runtime_error("MeasurementAdaptorProjective2D::compute| missing unprojector");
+      throw std::runtime_error("RawDataPreprocessorProjective2D::compute| missing unprojector");
     }
 
     Matrix_<float> range_matrix;
@@ -26,43 +26,43 @@ namespace srrg2_laser_tracker_2d {
       range_matrix.at(0, i) = _ranges->at(i);
     }
 
-    DestType dest_matrix;
-    std::back_insert_iterator<DestType> fixed_back_insertor(dest_matrix);
+    MeasurementType dest_matrix;
+    std::back_insert_iterator<MeasurementType> fixed_back_insertor(dest_matrix);
     param_unprojector->compute<WithNormals>(fixed_back_insertor, range_matrix);
     param_normal_computator_sliding->computeNormals(dest_matrix);
 
-    _dest->clear();
-    _dest->reserve(_ranges->size());
+    _meas->clear();
+    _meas->reserve(_ranges->size());
     const float& res = param_voxelize_resolution.value();
     if (res > 0) {
       // ds the resolution is too high we have to voxelize
-      DestType::PlainVectorType res_coeffs;
+      MeasurementType::PlainVectorType res_coeffs;
       res_coeffs << res, res, 1, 1;
-      dest_matrix.voxelize(std::back_insert_iterator<DestType>(*_dest), res_coeffs);
+      dest_matrix.voxelize(std::back_insert_iterator<MeasurementType>(*_meas), res_coeffs);
     } else {
       // ds gobble up each valid point
       for (auto it = dest_matrix.begin(); it != dest_matrix.end(); ++it) {
         if (it->status == POINT_STATUS::Valid) {
-          _dest->emplace_back(*it);
+          _meas->emplace_back(*it);
         }
       }
     }
     _status = Ready;
   }
 
-  bool MeasurementAdaptorProjective2D::setMeasurement(BaseSensorMessagePtr measurement_) {
-    if (!measurement_) {
+  bool RawDataPreprocessorProjective2D::setRawData(BaseSensorMessagePtr msg_) {
+    if (!msg_) {
       throw std::runtime_error(
-        "MeasurementAdaptorProjective2D::setMeasurement|measurement is not set");
+        "RawDataPreprocessorProjective2D::setMeasurement|measurement is not set");
     }
 
-    BaseType::setMeasurement(measurement_);
+    BaseType::setRawData(msg_);
     _status = Error;
 
     LaserMessagePtr laser_message =
-      srrg2_slam_interfaces::extractMessage<LaserMessage>(measurement_, param_scan_topic.value());
+      srrg2_slam_interfaces::extractMessage<LaserMessage>(msg_, param_scan_topic.value());
     if (!laser_message) {
-      std::cerr << FG_RED("MeasurementAdaptorProjective2D::setMeasurement|measurement does not "
+      std::cerr << FG_RED("RawDataPreprocessorProjective2D::setMeasurement|measurement does not "
                           "contain a laser message")
                 << std::endl;
       return false;
@@ -74,11 +74,11 @@ namespace srrg2_laser_tracker_2d {
     return true;
   }
 
-  void MeasurementAdaptorProjective2D::_processLaserMessage(LaserMessagePtr laser_message) {
+  void RawDataPreprocessorProjective2D::_processLaserMessage(LaserMessagePtr laser_message) {
     _ranges = &laser_message->ranges.value();
     if (!_ranges) {
       throw std::runtime_error(
-        "MeasurementAdaptorProjective2D::_processLaserMessage|ranges buffer not set");
+        "RawDataPreprocessorProjective2D::_processLaserMessage|ranges buffer not set");
     }
     const float range_max  = std::min(laser_message->range_max.value(), param_range_max.value());
     const float range_min  = std::max(laser_message->range_min.value(), param_range_min.value());
@@ -93,7 +93,7 @@ namespace srrg2_laser_tracker_2d {
     // adjust their parameters based on the processed laser message
     if (!param_unprojector.value()) {
       throw std::runtime_error(
-        "MeasurementAdaptorProjective2D::_processLaserMessage|missing unprojector");
+        "RawDataPreprocessorProjective2D::_processLaserMessage|missing unprojector");
     }
     PointNormal2fUnprojectorPolarPtr unprojector = param_unprojector.value();
     unprojector->param_range_min.setValue(range_min);

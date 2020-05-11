@@ -1,16 +1,14 @@
-#include <iostream>
+#include "srrg2_laser_slam_2d/instances.h"
+#include <srrg2_slam_interfaces/instances.h>
 #include <srrg_config/configurable_manager.h>
-#include <srrg_laser_slam_2d/instances.h>
-#include <srrg_qgl_viewport/viewer_core_shared_qgl.h>
-#include <srrg_slam_interfaces/instances.h>
-#include <srrg_system_utils/parse_command_line.h>
 #include <srrg_messages/instances.h>
 #include <srrg_messages_ros/instances.h>
-#include <srrg_pcl/instances.h> 
 #include <srrg_messages_ros/message_handlers/message_rosbag_source.h>
-#include <thread>
+#include <srrg_pcl/instances.h>
+#include <srrg_qgl_viewport/viewer_core_shared_qgl.h>
+#include <srrg_system_utils/parse_command_line.h>
 
-using namespace srrg2_laser_tracker_2d;
+using namespace srrg2_laser_slam_2d;
 using namespace srrg2_qgl_viewport;
 using namespace srrg2_slam_interfaces;
 using namespace srrg2_core;
@@ -25,10 +23,10 @@ void generateConfig(ConfigurableManager& manager_, const std::string& filepath_)
 int main(int argc, char** argv) {
   messages_registerTypes();
   messages_ros_registerTypes();
-  laser_tracker_2d_registerTypes();
+  srrg2_laser_slam_2d_registerTypes();
   point_cloud_registerTypes();
 
-  srrgInit(argc,argv,"laser_slam2d_app");
+  srrgInit(argc, argv, "laser_slam2d_app");
   ParseCommandLine command_line_parser(argv);
   ArgumentString config_file(
     &command_line_parser, "c", "configuration", "config file to read/write", "laser_slam2d.conf");
@@ -59,6 +57,11 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  if (input_bag.value() != "") {
+    MessageFileSourceBase* src =
+      dynamic_cast<MessageFileSourceBase*>(synchronizer->getRootSource());
+    src->open(input_bag.value());
+  }
   // ds launch viewer and processing thread (points are not changed at this point)
   QApplication qapp(argc, argv);
   srrg2_qgl_viewport::ViewerCoreSharedQGL viewer(argc, argv, &qapp);
@@ -87,24 +90,22 @@ void generateConfig(ConfigurableManager& manager_, const std::string& filepath_)
   // tg tracker params
   MultiTracker2DPtr tracker = manager_.create<MultiTracker2D>("tracker");
 
-  std::shared_ptr<MultiTrackerLaser2DSlice> tracker_slice =
-    manager_.create<MultiTrackerLaser2DSlice>();
+  std::shared_ptr<TrackerSliceProcessorLaser2D> tracker_slice =
+    manager_.create<TrackerSliceProcessorLaser2D>();
 
   tracker->param_slice_processors.pushBack(tracker_slice);
 
-  std::shared_ptr<MultiTracker2DSliceOdomPrior> odom_slice =
-    manager_.create<MultiTracker2DSliceOdomPrior>();
+  std::shared_ptr<TrackerSliceProcessorPriorOdom2D> odom_slice =
+    manager_.create<TrackerSliceProcessorPriorOdom2D>();
 
   tracker->param_slice_processors.pushBack(odom_slice);
   // tg aligner params
   MultiAligner2DPtr aligner = manager_.create<MultiAligner2D>("aligner");
 
-  std::shared_ptr<MultiAlignerLaser2DSlice> aligner_slice =
-    manager_.create<MultiAlignerLaser2DSlice>();
+  AlignerSliceProcessorLaser2DPtr aligner_slice = manager_.create<AlignerSliceProcessorLaser2D>();
   aligner->param_slice_processors.pushBack(aligner_slice);
 
-  std::shared_ptr<MultiAligner2DSliceOdomPrior> aligner_odom_slice =
-    manager_.create<MultiAligner2DSliceOdomPrior>();
+  AlignerSliceOdom2DPriorPtr aligner_odom_slice = manager_.create<AlignerSliceOdom2DPrior>();
 
   aligner->param_slice_processors.pushBack(aligner_odom_slice);
   // tg add aligner to tracker
@@ -124,8 +125,8 @@ void generateConfig(ConfigurableManager& manager_, const std::string& filepath_)
     manager_.create<LocalMapSelectorBreadthFirst2D>("selector");
 
   MultiAligner2DPtr aligner_loop_detector = manager_.create<MultiAligner2D>();
-  std::shared_ptr<MultiAlignerLaser2DSlice> aligner_loop_detector_slice =
-    manager_.create<MultiAlignerLaser2DSlice>();
+  AlignerSliceProcessorLaser2DPtr aligner_loop_detector_slice =
+    manager_.create<AlignerSliceProcessorLaser2D>();
 
   aligner_loop_detector->param_slice_processors.pushBack(aligner_loop_detector_slice);
   loop_detector->param_relocalize_aligner.setValue(aligner_loop_detector);
@@ -135,28 +136,29 @@ void generateConfig(ConfigurableManager& manager_, const std::string& filepath_)
     manager_.create<MultiRelocalizer2D>("relocalizer");
   MultiAligner2DPtr aligner_relocalizer = manager_.create<MultiAligner2D>();
 
-  std::shared_ptr<MultiAlignerLaser2DSlice> aligner_relocalizer_slice =
-    manager_.create<MultiAlignerLaser2DSlice>();
+  AlignerSliceProcessorLaser2DPtr aligner_relocalizer_slice =
+    manager_.create<AlignerSliceProcessorLaser2D>();
 
   aligner_relocalizer->param_slice_processors.pushBack(aligner_relocalizer_slice);
   relocalizer->param_aligner.setValue(aligner_relocalizer);
   // tg set up solver
-  SolverPtr global_solver                 = manager_.create<Solver>("global_solver");
-  
+  SolverPtr global_solver = manager_.create<Solver>("global_solver");
+
   RobustifierPolicyByTypePtr robustifiers = manager_.create<RobustifierPolicyByType>();
   robustifiers->param_factor_class_name.setValue("SE2PosePoseGeodesicErrorFactor");
 
   std::shared_ptr<RobustifierCauchy> r = manager_.create<RobustifierCauchy>();
   robustifiers->param_robustifier.setValue(r);
-  
+
   global_solver->param_robustifier_policies.pushBack(robustifiers);
   slammer->param_global_solver.setValue(global_solver);
 
   // tg set up source
   std::shared_ptr<MessageROSBagSource> rosbag = manager_.create<MessageROSBagSource>("src");
-  MessageSortedSourcePtr sorter = manager_.create<MessageSortedSource>("sorter");
-  MessageSynchronizedSourcePtr sync = manager_.create<MessageSynchronizedSource>("sync");
-  std::shared_ptr<MessageOdomSubsamplerSource> odom_sub = manager_.create<MessageOdomSubsamplerSource>("odom_sub");
+  MessageSortedSourcePtr sorter               = manager_.create<MessageSortedSource>("sorter");
+  MessageSynchronizedSourcePtr sync           = manager_.create<MessageSynchronizedSource>("sync");
+  std::shared_ptr<MessageOdomSubsamplerSource> odom_sub =
+    manager_.create<MessageOdomSubsamplerSource>("odom_sub");
   sorter->param_source.setValue(rosbag);
   odom_sub->param_source.setValue(sorter);
   sync->param_source.setValue(odom_sub);

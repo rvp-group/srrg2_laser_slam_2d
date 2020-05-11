@@ -8,21 +8,21 @@
 #include <srrg_pcl/point_unprojector_types.h>
 
 // ia processing module
-#include <srrg_slam_interfaces/measurement_adaptor.h>
+#include <srrg2_slam_interfaces/raw_data_preprocessors/raw_data_preprocessor.h>
 
 #include <srrg_pcl/normal_computator.h>
 
-namespace srrg2_laser_tracker_2d {
+namespace srrg2_laser_slam_2d {
 
-  class MeasurementAdaptorProjective2D
-    : public srrg2_slam_interfaces::MeasurementAdaptor_<srrg2_core::PointNormal2fVectorCloud> {
+  class RawDataPreprocessorProjective2D
+    : public srrg2_slam_interfaces::RawDataPreprocessor_<srrg2_core::PointNormal2fVectorCloud> {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    using ThisType = MeasurementAdaptorProjective2D;
+    using ThisType = RawDataPreprocessorProjective2D;
     using BaseType =
-      srrg2_slam_interfaces::MeasurementAdaptor_<srrg2_core::PointNormal2fVectorCloud>;
-    using DestType             = typename BaseType::DestType;
-    using NormalComputatorType = srrg2_core::NormalComputator1DSlidingWindow<DestType, 1>;
+      srrg2_slam_interfaces::RawDataPreprocessor_<srrg2_core::PointNormal2fVectorCloud>;
+    using MeasurementType      = typename BaseType::MeasurementType;
+    using NormalComputatorType = srrg2_core::NormalComputator1DSlidingWindow<MeasurementType, 1>;
 
     PARAM(
       srrg2_core::PropertyConfigurable_<srrg2_core::PointNormal2fUnprojectorPolar>,
@@ -45,7 +45,7 @@ namespace srrg2_laser_tracker_2d {
     PARAM(srrg2_core::PropertyString, scan_topic, "topic of the scan", "/scan", nullptr);
 
     void compute() override;
-    bool setMeasurement(srrg2_core::BaseSensorMessagePtr measurement_) override;
+    bool setRawData(srrg2_core::BaseSensorMessagePtr msg_) override;
 
   protected:
     //! @brief shitty aux function to process messages
@@ -55,6 +55,6 @@ namespace srrg2_laser_tracker_2d {
     std::vector<float>* _ranges = nullptr;
   };
 
-  using MeasurementAdaptorProjective2DPtr = std::shared_ptr<MeasurementAdaptorProjective2D>;
+  using RawDataPreprocessorProjective2DPtr = std::shared_ptr<RawDataPreprocessorProjective2D>;
 
 } // namespace srrg2_laser_tracker_2d
